@@ -2,75 +2,80 @@ package com.example.testlab;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import com.example.testlab.requests.StatusMessage;
+import com.example.testlab.requests.UserCredential;
+import com.example.testlab.requests.UserService;
 
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.Body;
-import retrofit2.http.GET;
-import retrofit2.http.Header;
-import retrofit2.http.POST;
 import retrofit2.Call;
-import retrofit2.http.Part;
 
 public class MainActivity extends AppCompatActivity {
-//    public static final String APP_PREFERENCES = "settings";
-    public static final String BASE_URL = "http://127.0.0.1:5000";
+    public static final String BASE_URL = "http://192.168.0.79";
+    // TODO: begin
+    public static final String COOKIE_KEY = "COOKIE";
+    // TODO: end
 
-    class UserCredential {
-        String username, password;
-
-        public UserCredential(String login, String password) {
-            this.username = login;
-            this.password = password;
-        }
-    }
-
-    class ResponseMessage {
-        String statusMessage;
-    }
-
-    class UserData {
-        String name, surname;
-        int age;
-    }
-
-    interface UserService {
-        @POST("/api/v1/login")
-        Call<ResponseMessage> login(@Body UserCredential userCredential);
-
-        @GET("/api/v1/user/{username}")
-        Call<UserData> getUserData(
-                @Header("Cookie") String cookie,
-                @Part("username") String username
-        );
-    }
+    private EditText usernameEditText, passwordEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        UserService userService = retrofit.create(UserService.class);
+        usernameEditText = findViewById(R.id.et_username);
+        passwordEditText = findViewById(R.id.et_password);
+        Button enterButton = findViewById(R.id.button_login);
 
-        Call<ResponseMessage> call = userService.login(new UserCredential("login", "pass"));
+        enterButton.setOnClickListener(view -> {
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            UserService userService = retrofit.create(UserService.class);
 
-        call.enqueue(new Callback<ResponseMessage>() {
-            @Override
-            public void onResponse(Call<ResponseMessage> call, Response<ResponseMessage> response) {
-                String cookie = response.headers().get("Set-Cookie");
-            }
+            Call<StatusMessage> call = userService.login(new UserCredential(
+                    usernameEditText.getText().toString(),
+                    passwordEditText.getText().toString()
+            ));
 
-            @Override
-            public void onFailure(Call<ResponseMessage> call, Throwable t) {
+            call.enqueue(new Callback<StatusMessage>() {
+                @Override
+                public void onResponse(Call<StatusMessage> call, Response<StatusMessage> response) {
+                    if (response.isSuccessful()){
+                        // TODO: begin
+                        String cookie = response.headers().get("Set-Cookie");
+                        Intent intent = new Intent(MainActivity.this, UserInfoActivity.class);
+                        intent.putExtra(COOKIE_KEY, cookie);
+                        startActivity(intent);
+                        finish();
+                        // TODO: end
+                    } else {
+                        Toast.makeText(
+                                getApplicationContext(),
+                                getResources().getString(R.string.incorrect_credential),
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
 
-            }
+                @Override
+                public void onFailure(Call<StatusMessage> call, Throwable t) {
+                    Toast.makeText(
+                            getApplicationContext(),
+                            getResources().getString(R.string.incorrect_request),
+                            Toast.LENGTH_SHORT
+                    ).show();
+                }
+            });
         });
     }
 }

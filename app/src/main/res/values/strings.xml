@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">TestLab</string>
+    <string name="default_value">...</string>
+    <string name="incorrect_request">Некорректный запрос</string>
+    <string name="incorrect_credential">Неверное имя подбзователя или пароль</string>
+    <string name="user_not_found">Пользователь не найден</string>
+    <string name="username">username</string>
+    <string name="password">password</string>
+    <string name="enter">Войти</string>
+    <string name="enter_username">Введите логин пользователя</string>
+    <string name="find">Найти</string>
 </resources>
